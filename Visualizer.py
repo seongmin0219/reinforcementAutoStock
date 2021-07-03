@@ -81,11 +81,52 @@ class Visualizer:
 
             # 가능한 두 리스트까지.
 
+            # 차트 2. 에이전트 상태 (행동 ,보유 주식 수)
+            # zip은 tuple 형태로 두 리스트를 묶는다
             for action , color in zip(action_list, self.COLORS):
                 for i in x[actions == action]:
                     # 배경색으로 행동 표시
                     self.axes[1].axvline(i, color=color, alpha =0.1)
             # x y 축 길이가 같은 데이터
             self.axes[1].plot(x, num_stocks , '-k') # 보유 주식 수 그리기
+
+            # actions : 에이전트가 수행한 행동 배열
+            # action_list 에이전트가 수행가능한 전체 행동 리스트
+            #  차트 3 . 가치 신경망
+            # 행동에 대한 예측 가치를 라인 차르로 표현
+            # outvals_value 가치 신경망 출력 배열
+            if len(outvals_value) > 0:
+                # y축일 경우 axis=1 이고 값이  아니라 인덱스를 반환한다
+                max_actions = np.argmax(outvals_value, axis=1)
+                for action , color in zip(action_list, self.COLORS):
+                    # 배경 그리기
+                    for idx in x:
+                        if max_actions[idx] == action:
+                            # axes는 캔버스 속 하나의 그림
+                            self.axes[2].axvline(idx,color=color, alpha =0.1)
+                        # 가치 신경망 출력의 tanh 그리기
+                        self.axes[2].plot(x, outvals_value[:,action],
+                                          color=color, linestyle='-')
+
+            # 차트 4 정책 신경망
+            # 탐험을 노란색 배경으로 그리기
+            for exp_idx in exps:
+                self.axes[3].axvline(exp_idx, color= 'y')
+            # 행동을 배경으로 그릭
+            # pep 8 _ priavte 변수
+            _outvals = outvals_policy if len(outvals_policy) > 0 \
+                else outvals_value
+            for idx, outval in zip(x, _outvals):
+                color = 'white'
+                if np.isnan(outval.max()):
+                    continue
+                if outval.argmax() == Agent.ACTION_BUY:
+                    color = 'r' # 매수 빨간색
+                elif outval.argmax() == Agent.ACTION_SELL:
+                    color = 'b' # 매도 파란색
+                self.axes[3].axvline(idx, color=color, alpha=0.1)
+            # 정책 신경망의 출력 그리기
+
+
 
 
